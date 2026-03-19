@@ -48,6 +48,11 @@ const data = {
       icon: <ListIcon />,
     },
     {
+      title: "Events",
+      url: "/events",
+      icon: <FileTextIcon />,
+    },
+    {
       title: "Shops",
       url: "/shops",
       icon: <ChartBarIcon />,
