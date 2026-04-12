@@ -30,11 +30,13 @@ import { DataTableToolbar } from "./data-table-toolbar";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onAddItem?: (item: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  onAddItem,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -73,7 +75,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
-      <DataTableToolbar table={table} />
+      <DataTableToolbar table={table} onAddItem={onAddItem} />
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
