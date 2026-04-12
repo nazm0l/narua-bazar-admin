@@ -32,10 +32,9 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const isShopTable = table.getColumn("name") !== undefined;
-  const isNewsTable =
-    table.getColumn("title") !== undefined &&
-    table.getColumn("description") !== undefined;
   const isEventTable = table.getColumn("date") !== undefined;
+  const isNewsTable =
+    !isShopTable && !isEventTable && table.getColumn("title") !== undefined;
 
   return (
     <div className="flex items-center justify-between">

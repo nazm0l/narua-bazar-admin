@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { AddNewsDialog } from "@/components/add-news-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -13,6 +13,50 @@ import {
 import { INews } from "@/lib/news.interface";
 import { ColumnDef } from "@tanstack/react-table";
 import { EllipsisVerticalIcon } from "lucide-react";
+
+const NewsActions = ({ news }: { news: INews }) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <EllipsisVerticalIcon className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <AddNewsDialog
+          news={news}
+          onUpdateNews={() => window.location.reload()}
+          trigger={
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              Edit News
+            </DropdownMenuItem>
+          }
+        />
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={async () => {
+            if (confirm("Are you sure you want to delete this news?")) {
+              try {
+                const response = await fetch(`/api/news/${news._id}`, {
+                  method: "DELETE",
+                });
+                if (!response.ok) throw new Error("Failed to delete news");
+                window.location.reload();
+              } catch (error) {
+                console.error("Error deleting news:", error);
+                alert("Failed to delete news");
+              }
+            }
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export const columns: ColumnDef<INews>[] = [
   {
@@ -59,46 +103,6 @@ export const columns: ColumnDef<INews>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <EllipsisVerticalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                // TODO: Implement Edit
-              }}
-            >
-              Edit News
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={async () => {
-                if (confirm("Are you sure you want to delete this news?")) {
-                  try {
-                    const response = await fetch(`/api/news/${row.original._id}`, {
-                      method: "DELETE",
-                    });
-                    if (!response.ok) throw new Error("Failed to delete news");
-                    window.location.reload();
-                  } catch (error) {
-                    console.error("Error deleting news:", error);
-                    alert("Failed to delete news");
-                  }
-                }
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <NewsActions news={row.original} />,
   },
 ];

@@ -17,17 +17,27 @@ import { useState } from "react";
 import { ImageUpload } from "./image-upload";
 
 interface AddNewsDialogProps {
-  onAddNews: (news: INews) => void;
+  onAddNews?: (news: INews) => void;
+  onUpdateNews?: (news: INews) => void;
+  news?: INews;
+  trigger?: React.ReactNode;
 }
 
-export function AddNewsDialog({ onAddNews }: AddNewsDialogProps) {
+export function AddNewsDialog({
+  onAddNews,
+  onUpdateNews,
+  news,
+  trigger,
+}: AddNewsDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    imgUrl: "",
+    title: news?.title || "",
+    description: news?.description || "",
+    imgUrl: news?.imgUrl || "",
   });
+
+  const isEditing = !!news;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -47,29 +57,44 @@ export function AddNewsDialog({ onAddNews }: AddNewsDialogProps) {
         return;
       }
 
-      const response = await fetch("/api/news", {
-        method: "POST",
+      const url = isEditing ? `/api/news/${news._id}` : "/api/news";
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add news");
+        throw new Error(
+          errorData.message || `Failed to ${isEditing ? "update" : "add"} news`,
+        );
       }
 
-      const createdNews = await response.json();
-      onAddNews(createdNews);
+      const result = await response.json();
+      if (isEditing && onUpdateNews) {
+        onUpdateNews(result);
+      } else if (!isEditing && onAddNews) {
+        onAddNews(result);
+      }
 
-      setFormData({
-        title: "",
-        description: "",
-        imgUrl: "",
-      });
+      if (!isEditing) {
+        setFormData({
+          title: "",
+          description: "",
+          imgUrl: "",
+        });
+      }
       setOpen(false);
     } catch (error) {
-      console.error("Error adding news:", error);
-      alert(error instanceof Error ? error.message : "Failed to add news");
+      console.error(`Error ${isEditing ? "updating" : "adding"} news:`, error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEditing ? "update" : "add"} news`,
+      );
     } finally {
       setLoading(false);
     }
@@ -78,13 +103,17 @@ export function AddNewsDialog({ onAddNews }: AddNewsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Add News</Button>
+        {trigger || <Button className="cursor-pointer">Add News</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New News Article</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit News Article" : "Add New News Article"}
+          </DialogTitle>
           <DialogDescription>
-            Create a new news article for Narua Bazar.
+            {isEditing
+              ? "Update the details of the news article."
+              : "Create a new news article for Narua Bazar."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,7 +159,13 @@ export function AddNewsDialog({ onAddNews }: AddNewsDialogProps) {
               disabled={loading}
               className="flex-1 cursor-pointer"
             >
-              {loading ? "Adding..." : "Add News"}
+              {loading
+                ? isEditing
+                  ? "Updating..."
+                  : "Adding..."
+                : isEditing
+                  ? "Update News"
+                  : "Add News"}
             </Button>
           </div>
         </form>
